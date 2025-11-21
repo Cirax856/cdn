@@ -39,14 +39,25 @@ while true; do
     fi
 done
 
+if [ -d /sys/firmware/efi ]; then
+    BOOT_TYPE="uefi"
+else
+    BOOT_TYPE="bios"
+fi
+
 cecho "$YELLOW" "Erasing $DISK..."
 sgdisk -Z "$DISK"
 
 cecho "$BLUE" "Enter swap size, appended with M or G (RAM size if using hibernation, half or RAM size without):"
 read -r SWAP_SIZE
 
-cecho "$YELLOW" "Creating EFI partition (512M)..."
-sgdisk -n 1:0:+512M -t 1:ef00 "$DISK"
+if [[ "$BOOT_TYPE" == "uefi" ]]; then
+    cecho "$YELLOW" "Creating EFI partition (512M)..."
+    sgdisk -n 1:0:+512M -t 1:ef00 "$DISK"
+else
+    cecho "$YELLOW" "Create BOOT partition (1M)..."
+    sgdisk -n 1:0:+1M -t 1:ef02 "$DISK"
+fi
 
 cecho "$YELLOW" "Creating Swap partition ($SWAP_SIZE)..."
 sgdisk -n 2:0:+$SWAP_SIZE -t 2:8200 "$DISK"
@@ -60,8 +71,10 @@ EFI_PART="${DISK}1"
 SWAP_PART="${DISK}2"
 ROOT_PART="${DISK}3"
 
-cecho "$YELLOW" "Formatting EFI partition as FAT32..."
-mkfs.fat -F32 "$EFI_PART"
+if [[ "$BOOT_TYPE" == "uefi" ]]; then
+    cecho "$YELLOW" "Formatting EFI partition as FAT32..."
+    mkfs.fat -F32 "$EFI_PART"
+fi
 
 cecho "$YELLOW" "Setting up Swap partition..."
 mkswap "$SWAP_PART"
@@ -72,8 +85,11 @@ mkfs.ext4 "$ROOT_PART"
 
 cecho "$YELLOW" "Mounting partitions..."
 mount "$ROOT_PART" /mnt
-mkdir -p /mnt/boot
-mount "$EFI_PART" /mnt/boot
+
+if [[ "$BOOT_TYPE" == "uefi" ]]; then
+    mkdir -p /mnt/boot
+    mount "$EFI_PART" /mnt/boot
+fi
 
 cecho "$GREEN" "Disk formatted and mounted!"
 
@@ -134,9 +150,6 @@ if [[ "$SUDO_CHOICE" == "y" ]]; then
 else
     cecho "$YELLOW" "User $USERNAME will not have sudo privileges..."
 fi
-
-cecho "$BLUE" "Is this system UEFI or BIOS? (uefi/bios):"
-read -r BOOT_TYPE
 
 if [[ "$BOOT_TYPE" == "uefi" ]]; then
     cecho "$YELLOW" "Installing GRUB for EUFI..."
