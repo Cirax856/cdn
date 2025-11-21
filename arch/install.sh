@@ -129,7 +129,7 @@ read -r SUDO_CHOICE
 if [[ "$SUDO_CHOICE" == "y" ]]; then
     arch-chroot /mnt pacman -Sy --noconfirm sudo
     arch-chroot /mnt usermod -aG wheel "$USERNAME"
-    arch-chroot /mnt sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /mnt/etc/sudoers
+    arch-chroot /mnt sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
     cecho "$GREEN" "User $USERNAME added to sudoers!"
 else
     cecho "$YELLOW" "User $USERNAME will not have sudo privileges..."
