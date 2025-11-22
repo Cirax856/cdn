@@ -37,11 +37,6 @@ while true; do
         continue
     fi
 
-    if ! blkid "$DISK" &>/dev/null; then
-        cecho "$RED" "Disk $DISK is not readable. Select again."
-        continue
-    fi
-
     cecho "$RED" "WARNING: All data on $DISK will be erased."
     cecho "$BLUE" "Are you sure you want to continue? (yes/no):"
     read -r CONFIRM
