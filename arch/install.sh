@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+trap 'echo "Error on line $LINENO: $BASH_COMMAND"' ERR
 
 GREEN="\033[0;32m"
 YELLOW="\033[1;33m"
