@@ -218,10 +218,27 @@ if [[ "$INSTALL_SWAY" == "n" ]]; then
 fi
 
 cecho "$YELLOW" "Installing dependencies..."
-arch-chroot /mnt pacman -Syyu --noconfirm sway swaylock waybar wofi grim slurp wl-clipboard nvim ghostty vivaldi ttf-jetbrains-mono-nerd pipewire pipewire-pulse pipewire-alsa pavucontrol wireplumber dolphin unzip
+arch-chroot /mnt pacman -Syyu --noconfirm \
+    lightdm lightdm-gtk-greeter \
+    sway swaylock waybar wofi grim slurp wl-clipboard \
+    nvim ghostty vivaldi ttf-jetbrains-mono-nerd \
+    pipewire pipewire-pulse pipewire-alsa pavucontrol wireplumber \
+    dolphin unzip
 
 cecho "$YELLOW" "Enabling services..."
-arch-chroot /mnt /bin/bash -c "systemctl enable pipewire pipewire-pulse wireplumber"
+arch-chroot /mnt /bin/bash -c "systemctl enable pipewire pipewire-pulse wireplumber lightdm.service"
+
+cecho "$YELLOW" "Create Sway session for LightDM..."
+arch-chroot /mnt /bin/bash -c "cat <<EOF > /usr/share/wayland-sessions/sway.desktop
+[Desktop Entry]
+name=Sway
+Comment=An i3-compatible Wayland compositor
+Exec=sway
+Type=Application
+DesktopNames=Sway
+EOF"
+
+cecho "$GREEN" "Sway and all apps installed!"
 
 cecho "$YELLOW" "Cleaning up..."
 umount -R /mnt
