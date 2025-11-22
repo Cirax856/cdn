@@ -23,9 +23,24 @@ timedatectl status
 cecho "$YELLOW" "Detecting available disks..."
 lsblk -dpno NAME,SIZE,MODEL | grep -v "loop"
 
+if ! lsblk -dn | grep -q .; then
+    cecho "$RED" "No disks found. Cannot continue."
+    exit 1
+fi
+
 while true; do
     cecho "$BLUE" "Please select a disk to install arch on (e.g., /dev/sda):"
     read -r DISK
+
+    if [ ! -b "$DISK" ]; then
+        cecho "$RED" "Disk $DISK does not exist. Select again."
+        continue
+    fi
+
+    if ! blkid "$DISK" &>/dev/null; then
+        cecho "$RED" "Disk $DISK is not readable. Select again."
+        continue
+    fi
 
     cecho "$RED" "WARNING: All data on $DISK will be erased."
     cecho "$BLUE" "Are you sure you want to continue? (yes/no):"
@@ -48,8 +63,12 @@ fi
 cecho "$YELLOW" "Erasing $DISK..."
 sgdisk -Z "$DISK"
 
-cecho "$BLUE" "Enter swap size, appended with M or G (RAM size if using hibernation, half or RAM size without):"
+mem_gb=$(awk '/MemTotal/ {printf "%.0f", $2/1024/1024}' /proc/meminfo)
+HALF="${mem_gb}G"
+
+cecho "$BLUE" "Enter swap size, appended with M or G (RAM size if using hibernation, half or RAM size without, or press enter for recommended $HALF):"
 read -r SWAP_SIZE
+SWAP_SIZE=${SWAP_SIZE:-$HALF}
 
 if [[ "$BOOT_TYPE" == "uefi" ]]; then
     cecho "$YELLOW" "Creating EFI partition (512M)..."
@@ -93,14 +112,26 @@ fi
 
 cecho "$GREEN" "Disk formatted and mounted!"
 
-cecho "$BLUE" "Enter your country code (e.g., US, DE, FR):"
-read -r MIRROR_COUNTRY
+valid_countries=$(reflector --list-countries | awk '{print $1}')
+while true; do
+    cecho "$BLUE" "Enter your country code (e.g., US, DE, FR):"
+    read -r MIRROR_COUNTRY
+    
+    if ! echo "$valid_countries" | grep -iq "^$MIRROR_COUNTRY$"; then
+        cecho "$RED" "Invalid country code: $MIRROR_COUNTRY"
+        cecho "$YELLOW" "Did you mean one of these?"
+
+        echo "$valid_countries" | grep -i "$MIRROR_COUNTRY"
+    else
+        break
+    fi
+done
 
 cecho "$YELLOW" "Updating mirrorlist for $MIRROR_COUNTRY..."
-reflector --country "$MIRROR_COUNTRY" --sort rate --save /etc/pacman.d/mirrorlist
+reflector --country "$MIRROR_COUNTRY" --protocol https --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
 
 cecho "$YELLOW" "Installing base system..."
-pacstrap /mnt base linux linux-firmware
+pacstrap /mnt --noconfirm base linux linux-firmware
 
 cecho "$YELLOW" "Generating fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -109,15 +140,37 @@ cecho "$GREEN" "Installed basic system and generated fstab!"
 
 cecho "$YELLOW" "Chrooting into the new system for configuration..."
 
-cecho "$BLUE" "Enter your timezone (e.g., Europe/Berlin):"
-read -r TIMEZONE
+while true; do
+    cecho "$BLUE" "Enter your timezone (e.g., Europe/Berlin):"
+    read -r TIMEZONE
+
+    if [ ! -f "/usr/share/zoneinfo/$TIMEZONE" ]; then
+        cecho "$RED" "Invalid timezone: $TIMEZONE"
+        cecho "$YELLOW" "Did you mean one of these?"
+
+        find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | grep -i "$TIMEZONE" | head -n 10
+    else
+        break;
+    fi
+done
 arch-chroot /mnt ln -sf /usr/share/zoneinfo/"$TIMEZONE" /etc/localtime
 arch-chroot /mnt hwclock --systohc
 
 cecho "$GREEN" "Timezone set!"
 
-cecho "$BLUE" "Enter your locale (e.g., en_US.UTF-8):"
-read -r LOCALE
+while true; do
+    cecho "$BLUE" "Enter your locale (e.g., en_US.UTF-8):"
+    read -r LOCALE
+
+    if ! locale -a | grep -qx "$LOCALE"; then
+        cecho "$RED" "Invalid locale: $LOCALE"
+        cecho "$YELLOW" "Did you mean one of these?"
+
+        locale -a | grep -i "$LOCALE" | head -n 10
+    else
+        break;
+    fi
+done
 echo "$LOCALE UTF-8" >> /mnt/etc/locale.gen
 arch-chroot /mnt locale-gen
 echo "LANG=$LOCALE" > /mnt/etc/locale.conf
@@ -130,20 +183,20 @@ echo "$NAME" > /mnt/etc/hostname
 
 cecho "$GREEN" "Set hostname to $NAME"
 
-cecho "$BLUE" "Set root password:"
+cecho "$BLUE" "Set root password (wait for password prompt):"
 arch-chroot /mnt passwd
 
 cecho "$BLUE" "Enter username:"
 read -r USERNAME
 arch-chroot /mnt useradd -m -G wheel -s /bin/bash "$USERNAME"
-cecho "$BLUE" "Set password for $USERNAME:"
+cecho "$BLUE" "Set password for $USERNAME (wait for password prompt):"
 arch-chroot /mnt passwd "$USERNAME"
 
-cecho "$BLUE" "Should this user have sudo/root privileges? (y/n):"
+cecho "$BLUE" "Should this user have sudo/root privileges? (recommended) (y/n):"
 read -r SUDO_CHOICE
 
 if [[ "$SUDO_CHOICE" == "y" ]]; then
-    arch-chroot /mnt pacman -Sy --noconfirm sudo
+    pacstrap /mnt --noconfirm sudo
     arch-chroot /mnt usermod -aG wheel "$USERNAME"
     arch-chroot /mnt sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
     cecho "$GREEN" "User $USERNAME added to sudoers!"
@@ -153,21 +206,43 @@ fi
 
 if [[ "$BOOT_TYPE" == "uefi" ]]; then
     cecho "$YELLOW" "Installing GRUB for EUFI..."
-    arch-chroot /mnt pacman -Sy --noconfirm grub efibootmgr
+    pacstrap /mnt --noconfirm grub efibootmgr
     arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
     arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
     cecho "$GREEN" "Installed GRUB!"
 else
     cecho "$YELLOW" "Installing GRUB for BIOS/legacy..."
-    arch-chroot /mnt pacman -Sy --noconfirm grub
+    pacstrap /mnt --noconfirm grub
     arch-chroot /mnt grub-install --target=i386-pc "$DISK"
     arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
     cecho "$GREEN" "Installed GRUB!"
 fi
 
+cecho "$BLUE" "Arch Linux is successfully installed. You can either reboot now into a fresh TTY and install everything yourself, or you can continue installing my own sway preset. Do you want to install my sway setup? (y/n)"
+read -r INSTALL_SWAY
+
+if [[ "$INSTALL_SWAY" == "n" ]]; then
+    cecho "$YELLOW" "Cleaning up..."
+    umount -R /mnt
+    swapoff "$SWAP_PART"
+    cecho "$GREEN" "System installed!"
+
+    cecho "$YELLOW" "Press enter to reboot..."
+    read -r
+    reboot
+fi
+
+cecho "$YELLOW" "Installing dependencies..."
+arch-chroot /mnt pacman -Syyu --noconfirm sway swaylock waybar wofi grim slurp wl-clipboard nvim ghostty vivaldi ttf-jetbrains-mono-nerd pipewire pipewire-pulse pipewire-alsa pavucontrol wireplumber dolphin unzip
+
+cecho "$YELLOW" "Enabling services..."
+arch-chroot /mnt /bin/bash -c "systemctl enable pipewire pipewire-pulse wireplumber"
+
 cecho "$YELLOW" "Cleaning up..."
 umount -R /mnt
 swapoff "$SWAP_PART"
-cecho "$GREEN" "System installed! Press enter to reboot."
+cecho "$GREEN" "System installed!"
+
+cecho "$YELLOW" "Press enter to reboot..."
 read -r
 reboot
