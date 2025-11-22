@@ -223,10 +223,10 @@ arch-chroot /mnt pacman -Syyu --noconfirm \
     sway sway-session swaylock waybar wofi grim slurp wl-clipboard \
     nvim ghostty vivaldi ttf-jetbrains-mono-nerd \
     pipewire pipewire-pulse pipewire-alsa pavucontrol wireplumber \
-    dolphin unzip
+    dolphin unzip networkmanager
 
 cecho "$YELLOW" "Enabling services..."
-arch-chroot /mnt /bin/bash -c "systemctl enable lightdm.service"
+arch-chroot /mnt /bin/bash -c "systemctl enable lightdm.service NetworkManager"
 
 cecho "$GREEN" "Sway and all apps installed!"
 
