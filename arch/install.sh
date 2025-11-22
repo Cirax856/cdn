@@ -226,7 +226,7 @@ arch-chroot /mnt pacman -Syyu --noconfirm \
     dolphin unzip
 
 cecho "$YELLOW" "Enabling services..."
-arch-chroot /mnt /bin/bash -c "systemctl enable pipewire pipewire-pulse wireplumber lightdm.service"
+arch-chroot /mnt /bin/bash -c "systemctl enable pipewire-pulse wireplumber lightdm.service"
 
 cecho "$YELLOW" "Create Sway session for LightDM..."
 arch-chroot /mnt /bin/bash -c "cat <<EOF > /usr/share/wayland-sessions/sway.desktop
