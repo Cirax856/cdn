@@ -153,19 +153,8 @@ arch-chroot /mnt hwclock --systohc
 
 cecho "$GREEN" "Timezone set!"
 
-while true; do
-    cecho "$BLUE" "Enter your locale (e.g., en_US.UTF-8):"
-    read -r LOCALE
-
-    if ! locale -a | grep -qx "$LOCALE"; then
-        cecho "$RED" "Invalid locale: $LOCALE"
-        cecho "$YELLOW" "Did you mean one of these?"
-
-        locale -a | grep -i "$LOCALE" | head -n 10
-    else
-        break;
-    fi
-done
+cecho "$BLUE" "Enter your locale (e.g., en_US.UTF-8):"
+read -r LOCALE
 echo "$LOCALE UTF-8" >> /mnt/etc/locale.gen
 arch-chroot /mnt locale-gen
 echo "LANG=$LOCALE" > /mnt/etc/locale.conf
