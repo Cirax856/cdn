@@ -1,0 +1,119 @@
+:root {
+    --bg: #171726;
+    --fg: #D9D9D9;
+    --primary: #A241BC;
+    --secondary: #21214D;
+    --accent: #512A77;
+
+    --bgl: #30303B;
+
+    --green: #23F0C7;
+    --red: #DF2935;
+    --yellow: #BFAE48;
+}
+
+.theme-midnight {
+    --background-base-low: var(--bg) !important;
+    --background-base-lower: var(--bg) !important;
+    --background-base-lowest: var(--bg) !important;
+    --app-border-frame: var(--accent) !important;
+    --header-primary: var(--primary) !important;
+    --header-secondary: var(--primary) !important;
+    --control-text-secondary-default: var(--fg) !important;
+    --border-subtle: var(--accent) !important;
+    --text-tertiary: var(--accent) !important;
+    --interactive-active: var(--accent) !important;
+    --status-danger-background: var(--red) !important;
+    --status-danger: var(--red) !important;
+    --text-muted: var(--accent) !important;
+    --background-mod-strong: var(--accent) !important;
+    --text-default: var(--fg) !important;
+    --control-background-secondary-default: var(--secondary) !important;
+    --input-background-default: var(--secondary) !important;
+    --background-modifier-selected: var(--secondary) !important;
+    --background-mod-faint: var(--secondary) !important;
+    --background-surface-high: var(--bg);
+    --interactive-normal: var(--accent);
+    --text-danger: var(--red);
+    --text-link: var(--primary);
+    --background-mentioned: var(--secondary);
+    --background-mentioned-hover: var(--bgl);
+    --info-warning-foreground: var(--primary);
+
+    --white-500: var(--fg) !important;
+}
+
+.input__0f084 {
+    color: #A241BC !important;
+}
+
+.bar_c38106 {
+    display: none;
+}
+
+.container__9293f {
+    display: none;
+}
+
+.container__133bf,
+.sidebarList__5e434 {
+    border-top-width: 3px;
+}
+
+.peopleListItem_cc6179 {
+    border-top-width: 3px;
+    border-top-color: var(--secondary);
+    height: 72px !important;
+}
+
+.content_d125d2 {
+    height: auto !important;
+}
+
+[fill="#43a25a"] {
+    fill: var(--green);
+}
+
+[fill="#d83a42"] {
+    fill: var(--red) !important;
+}
+
+[fill="#ca9654"] {
+    fill: var(--yellow);
+}
+
+[fill="#82838b"] {
+    fill: var(--fg);
+}
+
+.innerContainer_dfb989,
+.overflowTooltip__972a0,
+.interactive_bf202d {
+    color: var(--header-primary);
+}
+
+[data-list-item-id="private-channels-uid_35___nitro"],
+.newBadge__4ed1a {
+    display: none;
+}
+
+.dot_c9d15c {
+    color: var(--primary);
+}
+
+.mention__3b95d {
+    border: 0;
+}
+
+[aria-label^="unread"] .overflowTooltip__972a0 {
+    color: var(--fg);
+}
+
+.guildSeparator__252b6 {
+    height: 3px;
+    width: 48px;
+}
+
+.discoveryIcon_ef3116 {
+    color: var(--primary);
+}
