@@ -29,26 +29,19 @@ if ! lsblk -dn | grep -q .; then
     exit 1
 fi
 
-while true; do
-    cecho "$BLUE" "Please select a disk to install arch on (e.g., /dev/sda):"
-    read -r DISK
+cecho "$BLUE" "Please select a disk to install arch on (e.g., /dev/sda):"
+read -r DISK
 
-    if [ ! -b "$DISK" ]; then
-        cecho "$RED" "Disk $DISK does not exist. Select again."
-        continue
-    fi
+cecho "$RED" "WARNING: All data on $DISK will be erased."
+cecho "$BLUE" "Are you sure you want to continue? (yes/no):"
+read -r CONFIRM
 
-    cecho "$RED" "WARNING: All data on $DISK will be erased."
-    cecho "$BLUE" "Are you sure you want to continue? (yes/no):"
-    read -r CONFIRM
-
-    if [[ "$CONFIRM" == yes ]]; then
-        cecho "$GREEN" "Disk $DISK selected. Proceeding..."
-        break;
-    else
-        cecho "$YELLOW" "Let's try that again!"
-    fi
-done
+if [[ "$CONFIRM" == yes ]]; then
+    cecho "$GREEN" "Disk $DISK selected. Proceeding..."
+    break;
+else
+    cecho "$YELLOW" "Let's try that again!"
+fi
 
 if [ -d /sys/firmware/efi ]; then
     BOOT_TYPE="uefi"
@@ -108,20 +101,8 @@ fi
 
 cecho "$GREEN" "Disk formatted and mounted!"
 
-valid_countries=$(reflector --list-countries | awk '{print $1}')
-while true; do
-    cecho "$BLUE" "Enter your country code (e.g., US, DE, FR):"
-    read -r MIRROR_COUNTRY
-    
-    if ! echo "$valid_countries" | grep -iq "^$MIRROR_COUNTRY$"; then
-        cecho "$RED" "Invalid country code: $MIRROR_COUNTRY"
-        cecho "$YELLOW" "Did you mean one of these?"
-
-        echo "$valid_countries" | grep -i "$MIRROR_COUNTRY"
-    else
-        break
-    fi
-done
+cecho "$BLUE" "Enter your country code (e.g., US, DE, FR):"
+read -r MIRROR_COUNTRY
 
 cecho "$YELLOW" "Updating mirrorlist for $MIRROR_COUNTRY..."
 reflector --country "$MIRROR_COUNTRY" --protocol https --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
@@ -136,19 +117,9 @@ cecho "$GREEN" "Installed basic system and generated fstab!"
 
 cecho "$YELLOW" "Chrooting into the new system for configuration..."
 
-while true; do
-    cecho "$BLUE" "Enter your timezone (e.g., Europe/Berlin):"
-    read -r TIMEZONE
+cecho "$BLUE" "Enter your timezone (e.g., Europe/Berlin):"
+read -r TIMEZONE
 
-    if [ ! -f "/usr/share/zoneinfo/$TIMEZONE" ]; then
-        cecho "$RED" "Invalid timezone: $TIMEZONE"
-        cecho "$YELLOW" "Did you mean one of these?"
-
-        find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | grep -i "$TIMEZONE" | head -n 10
-    else
-        break;
-    fi
-done
 arch-chroot /mnt ln -sf /usr/share/zoneinfo/"$TIMEZONE" /etc/localtime
 arch-chroot /mnt hwclock --systohc
 
@@ -221,12 +192,13 @@ cecho "$YELLOW" "Installing dependencies..."
 arch-chroot /mnt pacman -Syyu --noconfirm \
     lightdm lightdm-gtk-greeter \
     sway xorg-xwayland swaylock swaybg swayidle waybar wofi grim slurp wl-clipboard brightnessctl \
+    man-db more less mandoc man-pages \
     nvim ghostty vivaldi ttf-jetbrains-mono-nerd \
     pipewire pipewire-pulse pipewire-alsa pavucontrol wireplumber \
     dolphin unzip networkmanager
 
 cecho "$YELLOW" "Enabling services..."
-arch-chroot /mnt /bin/bash -c "systemctl enable lightdm.service NetworkManager"
+arch-chroot /mnt /bin/bash -c "systemctl enable lightdm NetworkManager"
 
 cecho "$GREEN" "Sway and all apps installed!"
 
