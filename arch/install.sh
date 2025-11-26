@@ -192,7 +192,7 @@ cecho "$YELLOW" "Installing dependencies..."
 arch-chroot /mnt pacman -Syyu --noconfirm \
     lightdm lightdm-gtk-greeter \
     sway xorg-xwayland swaylock swaybg swayidle waybar wofi grim slurp wl-clipboard brightnessctl \
-    man-db less mandoc man-pages \
+    less mandoc man-pages \
     nvim ghostty vivaldi ttf-jetbrains-mono-nerd \
     pipewire pipewire-pulse pipewire-alsa pavucontrol wireplumber \
     dolphin unzip networkmanager
