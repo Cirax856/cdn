@@ -191,11 +191,12 @@ fi
 cecho "$YELLOW" "Installing dependencies..."
 arch-chroot /mnt pacman -Syyu --noconfirm \
     lightdm lightdm-gtk-greeter \
-    sway xorg-xwayland swaylock swaybg swayidle waybar wofi grim slurp wl-clipboard brightnessctl \
+    sway xorg-xwayland swaylock swaybg swayidle waybar wofi grim slurp wl-clipboard brightnessctl iwd xdg-utils smartmontools \
     less mandoc man-pages \
     nvim ghostty vivaldi ttf-jetbrains-mono-nerd \
     pipewire pipewire-pulse pipewire-alsa pavucontrol wireplumber \
-    dolphin unzip networkmanager
+    dolphin unzip networkmanager \
+    intel-media-driver libva-intel-driver libva-mesa-driver mesa vulkan-intel vulkan-nouveau vulkan-radeon xf86-video-amdgpu xf86-video-ati xf86-video-nouveau xorg-server xorg-xinit
 
 cecho "$YELLOW" "Enabling services..."
 arch-chroot /mnt /bin/bash -c "systemctl enable lightdm NetworkManager"
