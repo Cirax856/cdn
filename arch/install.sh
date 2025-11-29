@@ -208,7 +208,7 @@ cecho "$YELLOW" "Creating config dirs..."
 arch-chroot /mnt mkdir -p "/home/$USERNAME/.config/ghostty/themes" "/home/$USERNAME/.config/nvim/lua/config" "/home/$USERNAME/.config/nvim/lua/plugins" "/home/$USERNAME/.config/sway" "/home/$USERNAME/.config/vesktop/settings" "/home/$USERNAME/.config/vesktop/themes" "/home/$USERNAME/.config/waybar"
 
 cecho "$YELLOW" "Installing config files..."
-arch-chroot /mnt bash -c '
+arch-chroot /mnt USERNAME="$USERNAME" bash -c '
 icfg() {
   curl -L "https://cdn.cirax.dev/arch/$1" -o "/home/$USERNAME/.config/$1"
 }
